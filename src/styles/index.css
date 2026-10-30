@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body { @apply bg-canvas text-ink font-sans text-base leading-relaxed antialiased; }
+  h1, h2, h3 { @apply tracking-tight; }
+  button { @apply transition-colors duration-150 ease-out; }
+  :focus-visible { @apply outline-none ring-2 ring-brand ring-offset-2; }
+  ::selection { @apply bg-brand-100 text-brand-900; }
+}
+@layer components {
+  .container-page { @apply mx-auto w-full max-w-page px-4 sm:px-6 lg:px-8; }
+  .home-hero-lighting::before { content: ''; position: absolute; z-index: 1; inset: 0; pointer-events: none; background: radial-gradient(ellipse 48rem 25rem at 18% 38%, rgb(87 164 255 / 17%), transparent 72%), linear-gradient(180deg, transparent 76%, rgb(15 23 42 / 34%) 100%); }
+  .home-hero-lighting::after { content: ''; position: absolute; z-index: 1; inset: auto 0 0; height: 5rem; pointer-events: none; background: linear-gradient(180deg, transparent, rgb(15 23 42 / 20%)); }
+  .card { @apply rounded-card border border-line bg-surface shadow-card; }
+  .input { @apply min-h-11 w-full rounded-control border border-slate-300 bg-surface px-3 py-2.5 text-base leading-normal text-ink placeholder:text-ink-muted transition-colors duration-150 hover:border-slate-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-ink-muted; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

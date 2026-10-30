@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" fill="none">
+  <defs>
+    <linearGradient id="sky" x1="160" y1="74" x2="1415" y2="823" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B5D9D0"/>
+      <stop offset=".48" stop-color="#7AACA0"/>
+      <stop offset="1" stop-color="#436E69"/>
+    </linearGradient>
+    <linearGradient id="house" x1="716" y1="323" x2="1141" y2="772" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F3E7CE"/>
+      <stop offset="1" stop-color="#C9B99E"/>
+    </linearGradient>
+    <linearGradient id="roof" x1="662" y1="269" x2="1057" y2="409" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#526A68"/>
+      <stop offset="1" stop-color="#354F4E"/>
+    </linearGradient>
+    <linearGradient id="ground" x1="800" y1="574" x2="800" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#668778"/>
+      <stop offset="1" stop-color="#334F49"/>
+    </linearGradient>
+    <filter id="blur" x="-100" y="-100" width="1800" height="1100" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="28"/>
+    </filter>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h1600v900H0z"/>
+  <circle cx="1268" cy="165" r="114" fill="#F5DDA8" fill-opacity=".58" filter="url(#blur)"/>
+  <path fill="#496D67" fill-opacity=".48" d="M0 402 166 280l119 91 188-183 188 209 163-135 145 120 174-196 201 208 140-112 116 88v273H0z"/>
+  <path fill="#355C57" fill-opacity=".48" d="m0 497 177-130 147 115 186-174 208 195 157-109 175 136 169-188 173 152 122-96 86 65v244H0z"/>
+  <path fill="url(#ground)" d="M0 594h1600v306H0z"/>
+  <path fill="#77917D" fill-opacity=".58" d="M0 671c203-59 341-55 519-6 217 60 395 56 593-7 172-55 315-56 488-8v250H0z"/>
+  <path fill="url(#house)" d="M655 414h514v310H655z"/>
+  <path fill="url(#roof)" d="m602 427 301-202 321 202H602Z"/>
+  <path fill="#D8C8AE" d="M635 419h537v20H635z"/>
+  <path fill="#D7C8AE" d="M866 480h100v244H866z"/>
+  <path fill="#8D765C" d="M881 492h71v232h-71z"/>
+  <circle cx="937" cy="609" r="5" fill="#E9D9B8"/>
+  <path fill="#A9C9BD" d="M696 484h122v105H696z"/>
+  <path fill="#E8E0D1" d="M751 484h12v105h-12zM696 530h122v12H696z"/>
+  <path fill="#A9C9BD" d="M1005 484h122v105h-122z"/>
+  <path fill="#E8E0D1" d="M1060 484h12v105h-12zM1005 530h122v12h-122z"/>
+  <path fill="#D8C7A9" d="M626 724h577v20H626z"/>
+  <path fill="#557267" d="M547 724h717v31H547z"/>
+  <path fill="#B6A486" d="M546 754h719v16H546z"/>
+  <path fill="#45685A" d="M242 755h126v145H242z"/>
+  <path fill="#557B65" d="M261 680c-38 13-57 46-52 85 36 7 70-12 83-45 16 35 50 51 84 42 0-40-23-72-61-81-19-4-37-3-54 5Z"/>
+  <path fill="#658B70" d="M299 622c-35 13-50 43-46 76 33 7 62-10 75-39 14 30 42 44 72 36 0-35-20-64-54-72-17-4-32-3-47-1Z"/>
+  <path fill="#45685A" d="M1338 745h109v155h-109z"/>
+  <path fill="#557B65" d="M1361 665c-36 13-54 44-50 81 34 8 66-10 79-41 14 31 44 47 75 38 0-37-21-66-57-75-17-4-33-4-47-3Z"/>
+  <path fill="#6F9578" d="M1390 604c-30 11-45 37-42 67 28 7 55-8 66-34 12 26 37 39 63 32 0-31-18-56-48-63-15-4-27-4-39-2Z"/>
+  <path fill="#E8D7B7" fill-opacity=".45" d="M0 0h1600v900H0z"/>
+</svg>
