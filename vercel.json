@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://localconnect-backend-0eze.onrender.com/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
