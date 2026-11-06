@@ -6,7 +6,7 @@ import { PrismaClient } from '../../generated/prisma/client.ts'
 export function createPrismaClient(databaseUrl) {
   const adapter = new PrismaPg({
     connectionString: databaseUrl,
-    connectionTimeoutMillis: 5000, // fail in 5s instead of hanging if PostgreSQL is unreachable
+    connectionTimeoutMillis: 30000, // fail in 5s instead of hanging if PostgreSQL is unreachable
   })
   return new PrismaClient({ adapter })
 }

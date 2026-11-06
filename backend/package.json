@@ -16,8 +16,11 @@
     "test:watch": "vitest",
     "db:generate": "prisma generate",
     "db:check": "node scripts/check-db.js",
+    "db:check-admin-lock": "node scripts/check-admin-lock.js",
     "db:seed:dev": "node scripts/seed-dev.js",
-    "db:setup-admin:dev": "node scripts/setup-admin-dev.js"
+    "db:setup-admin:dev": "node scripts/setup-admin-dev.js",
+    "db:provision-admin:production": "node scripts/provision-admin-production.js",
+    "db:promote-admin:production": "node scripts/promote-admin-production.js"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",

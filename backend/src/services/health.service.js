@@ -1,15 +1,29 @@
-// Asks PostgreSQL a trivial question ("SELECT 1") to prove the connection works.
-// Gives up after `timeoutMs` so the health endpoint can never hang.
-export async function isDatabaseUp(prisma, timeoutMs = 2000) {
+export async function isDatabaseUp(prisma, timeoutMs = 3000) {
   let timer
-  const timeout = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(new Error('database check timed out')), timeoutMs)
-  })
+
   try {
-    await Promise.race([prisma.$queryRaw`SELECT 1`, timeout])
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        reject(new Error('Database health check timed out'))
+      }, timeoutMs)
+    })
+
+    await Promise.race([
+      prisma.$queryRaw`SELECT 1`,
+      timeout,
+    ])
+
     return true
-  } catch {
-    return false // details are deliberately not exposed to the caller
+  } catch (error) {
+    console.error('[DATABASE HEALTH CHECK ERROR]', {
+      name: error?.name,
+      code: error?.code,
+      message: error?.message,
+      cause: error?.cause?.message,
+      meta: error?.meta,
+    })
+
+    return false
   } finally {
     clearTimeout(timer)
   }

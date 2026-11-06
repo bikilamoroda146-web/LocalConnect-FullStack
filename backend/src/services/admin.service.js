@@ -51,3 +51,58 @@ export async function decideProvider(prisma, providerId, decision) {
   })
   return { provider: { ...result, user: { id: user.id, name: user.name, email: user.email, status: approved ? 'ACTIVE' : 'SUSPENDED' } } }
 }
+
+
+const adminUserSelect = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  status: true,
+  phone: true,
+  area: true,
+  createdAt: true,
+  providerProfile: { select: { id: true, area: true } },
+}
+
+export async function listAdminUsers(prisma) {
+  const users = await prisma.user.findMany({
+    orderBy: { createdAt: 'desc' },
+    select: adminUserSelect,
+  })
+
+  return users.map(({ providerProfile, ...user }) => ({
+    ...user,
+    area: user.area ?? providerProfile?.area ?? null,
+    joined: user.createdAt,
+  }))
+}
+
+export async function updateAdminUserStatus(prisma, userId, status) {
+  if (!['ACTIVE', 'SUSPENDED'].includes(status)) {
+    return { error: 'INVALID_STATUS' }
+  }
+
+  const existing = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true, status: true },
+  })
+
+  if (!existing) return { error: 'USER_NOT_FOUND' }
+  if (existing.role === 'ADMIN') return { error: 'CANNOT_CHANGE_ADMIN' }
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: { status },
+    select: adminUserSelect,
+  })
+
+  const { providerProfile, ...user } = updated
+  return {
+    user: {
+      ...user,
+      area: user.area ?? providerProfile?.area ?? null,
+      joined: user.createdAt,
+    },
+  }
+}

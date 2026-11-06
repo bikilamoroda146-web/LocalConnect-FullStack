@@ -2,66 +2,124 @@
 // Tests the connection to PostgreSQL using DATABASE_URL from backend/.env and explains common problems.
 // It only READS (SELECT) and never changes data.
 import '../src/config/assertNodeVersion.js'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { loadEnv, EnvValidationError } from '../src/config/env.js'
 
-let config
-try {
-  config = loadEnv()
-} catch (err) {
-  if (err instanceof EnvValidationError) {
-    console.error('\nConfiguration problem:\n')
-    err.problems.forEach((p) => console.error(`  - ${p}`))
-    console.error('\nCreate backend/.env from backend/.env.example first (see README).\n')
-    process.exit(1)
+function safeDiagnosticToken(value) {
+  return typeof value === 'string' && /^[A-Za-z0-9_:-]+$/.test(value) ? value : undefined
+}
+
+export function findDatabaseDiagnostic(error) {
+  const codes = []
+  const categories = []
+  const types = new Set()
+  const queue = [error]
+  const seen = new Set()
+
+  for (let depth = 0; queue.length && depth < 12; depth += 1) {
+    const current = queue.shift()
+    if (!current || typeof current !== 'object' || seen.has(current)) continue
+    seen.add(current)
+
+    const type = safeDiagnosticToken(current.name) ?? safeDiagnosticToken(current.constructor?.name)
+    if (type && type !== 'Object') types.add(type)
+
+    for (const candidate of [current.originalCode, current.code]) {
+      const token = safeDiagnosticToken(candidate)
+      if (token) codes.push(token)
+    }
+    if (typeof current.kind === 'string') {
+      const token = safeDiagnosticToken(current.kind)
+      if (token) categories.push(token)
+    }
+
+    for (const property of ['cause', 'meta', 'driverAdapterError', 'kind']) {
+      const nested = current[property]
+      if (nested && typeof nested === 'object') queue.push(nested)
+    }
   }
-  throw err
-}
 
-let createPrismaClient
-try {
-  ;({ createPrismaClient } = await import('../src/lib/prisma.js'))
-} catch {
-  console.error('\nThe Prisma client has not been generated yet. Run:  npm run db:generate\n')
-  process.exit(1)
-}
-
-// Prisma wraps the real PostgreSQL problem. The useful part is in meta.driverAdapterError.cause
-// (a PostgreSQL code like 28P01, or a "kind" like DatabaseNotReachable). Fall back to plain Node error codes.
-function findCode(err) {
-  const cause = err?.meta?.driverAdapterError?.cause
-  if (cause?.originalCode) return String(cause.originalCode)
-  if (cause?.kind) return String(cause.kind)
-  for (let e = err, i = 0; e && i < 5; e = e.cause, i++) if (e.code && !/^P\d{4}$/.test(String(e.code))) return String(e.code)
-  return ''
+  return {
+    code: codes.find((code) => !/^P\d{4}$/.test(code)) ?? codes[0] ?? 'UNKNOWN',
+    category: categories[0] ?? 'UNKNOWN',
+    type: [...types].join('|') || 'UNKNOWN',
+  }
 }
 
 const hints = {
-  DatabaseNotReachable: 'Nothing is listening on that host/port. Is PostgreSQL running? Is the port in DATABASE_URL correct (default 5432)?',
-  AuthenticationFailed: 'PostgreSQL rejected the user name or password in DATABASE_URL.',
-  DatabaseDoesNotExist: `The database "${config.databaseName}" does not exist yet. Create it first (see README, "Create the databases").`,
-  ECONNREFUSED: 'Nothing is listening on that host/port. Is PostgreSQL running? Is the port in DATABASE_URL correct (default 5432)?',
-  ENOTFOUND: 'The host name in DATABASE_URL could not be found. For a local database use "localhost".',
-  ETIMEDOUT: 'The connection timed out. Is PostgreSQL running and reachable?',
-  '28P01': 'PostgreSQL rejected the user name or password in DATABASE_URL.',
-  '28000': 'PostgreSQL rejected the user name or password in DATABASE_URL.',
-  '3D000': `The database "${config.databaseName}" does not exist yet. Create it first (see README, "Create the databases").`,
-  '42501': 'The database user does not have permission to use this database.',
+  DatabaseNotReachable: 'The database host or port could not be reached.',
+  AuthenticationFailed: 'PostgreSQL rejected the supplied authentication.',
+  DatabaseDoesNotExist: 'The configured database does not exist.',
+  TlsConnectionError: 'TLS negotiation failed.',
+  ECONNREFUSED: 'The database host or port refused the connection.',
+  ENOTFOUND: 'The database host name could not be resolved.',
+  ETIMEDOUT: 'The database connection timed out.',
+  '28P01': 'PostgreSQL rejected the supplied authentication.',
+  '28000': 'PostgreSQL rejected the supplied authentication.',
+  '3D000': 'The configured database does not exist.',
+  '42501': 'The database user lacks the required permission.',
 }
 
+export async function runCheck({ load = loadEnv, createClient } = {}) {
+  let config
+  try {
+    config = load()
+  } catch (err) {
+    if (err instanceof EnvValidationError) {
+      console.error('\nConfiguration problem:\n')
+      err.problems.forEach((problem) => console.error(`  - ${problem}`))
+      console.error('\nCreate backend/.env from backend/.env.example first (see README).\n')
+      return 1
+    }
+    throw err
+  }
+
+  let createPrismaClient = createClient
+  if (!createPrismaClient) {
+    try {
+      ;({ createPrismaClient } = await import('../src/lib/prisma.js'))
+    } catch {
+      console.error('\nThe Prisma client has not been generated yet. Run:  npm run db:generate\n')
+      return 1
+    }
+  }
+
+  console.log('DEBUG: Creating Prisma client')
+
 const prisma = createPrismaClient(config.databaseUrl)
-try {
-  const [info] = await prisma.$queryRaw`SELECT current_database() AS db, current_user AS usr, version() AS version`
-  console.log('\nPostgreSQL connection OK')
-  console.log(`  database : ${info.db}`)
-  console.log(`  user     : ${info.usr}`)
-  console.log(`  server   : ${String(info.version).split(',')[0]}\n`)
-} catch (err) {
-  const code = findCode(err)
-  console.error('\nCould not connect to PostgreSQL.')
-  console.error(`  database : ${config.databaseName}`)
-  if (code) console.error(`  code     : ${code}`)
-  console.error(`  hint     : ${hints[code] ?? 'Check that PostgreSQL is running and that DATABASE_URL in backend/.env is correct.'}\n`)
-  process.exitCode = 1
-} finally {
-  await prisma.$disconnect().catch(() => {})
+
+console.log('DEBUG: Prisma client initialized')
+  
+  try {
+    console.log('DEBUG: Starting database query')
+
+const [info] = await prisma.$queryRaw`
+  SELECT current_database() AS db,
+         current_user AS usr,
+         version() AS version
+`
+
+console.log('DEBUG: Database query completed')
+    console.log('\nPostgreSQL connection OK')
+    console.log(`  database : ${info.db}`)
+    console.log(`  user     : ${info.usr}`)
+    console.log(`  server   : ${String(info.version).split(',')[0]}\n`)
+    return 0
+  } catch (err) {
+    const diagnostic = findDatabaseDiagnostic(err)
+    console.error('\nCould not connect to PostgreSQL.')
+    console.error(`  database : ${config.databaseName}`)
+    console.error(`  category : ${diagnostic.category}`)
+    console.error(`  code     : ${diagnostic.code}`)
+    console.error(`  error    : ${diagnostic.type}`)
+    console.error(`  hint     : ${hints[diagnostic.category] ?? hints[diagnostic.code] ?? 'Check the PostgreSQL connection settings.'}\n`)
+    return 1
+  } finally {
+    await prisma.$disconnect().catch(() => {})
+  }
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  process.exitCode = await runCheck()
 }
